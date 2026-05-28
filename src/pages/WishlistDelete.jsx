@@ -1,5 +1,7 @@
 import styled from "styled-components";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { deleteWishlist } from "../api/wishlist";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -20,7 +22,6 @@ const Container = styled.div`
   flex-direction: column;
 `;
 
-/* ── 헤더 ── */
 const Header = styled.div`
   background: rgba(213, 229, 213, 0.50);
   border: 1px solid #D5E5D5;
@@ -79,7 +80,6 @@ const CloseBtn = styled.button`
   &:hover { opacity: 0.7; }
 `;
 
-/* ── 내부 카드 ── */
 const InnerCard = styled.div`
   background: #fff;
   border: 1px solid #D5E5D5;
@@ -90,7 +90,6 @@ const InnerCard = styled.div`
   gap: 24px;
 `;
 
-/* ── 아이템 카드 ── */
 const ItemCard = styled.div`
   background: rgba(213, 229, 213, 0.50);
   border-radius: 16px;
@@ -149,7 +148,6 @@ const ItemUrl = styled.a`
   &:hover { text-decoration: underline; }
 `;
 
-/* ── 버튼 ── */
 const BtnRow = styled.div`
   display: flex;
   align-items: center;
@@ -186,12 +184,16 @@ const DeleteBtn = styled.button`
   &:hover { opacity: 0.8; }
 `;
 
-/* 기본 */
+const ErrorMsg = styled.div`
+  font-size: 12px;
+  color: #E84B6A;
+  text-align: center;
+`;
+
 const DEFAULT_ITEM = {
-  icon: "🎧",
-  name: "에어팟",
+  id: null,
+  itemName: "에어팟",
   price: 89000,
-  ratio: 20,
   url: "https://www.apple.com/kr/",
 };
 
@@ -199,9 +201,29 @@ export default function WishlistDelete() {
   const navigate = useNavigate();
   const location = useLocation();
   const item = location.state?.item || DEFAULT_ITEM;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleDelete = () => {
-    navigate('/wishlist');
+  const handleDelete = async () => {
+    if (!item.id) {
+      navigate('/wishlist');
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await deleteWishlist(item.id);
+      if (res.success) {
+        navigate('/wishlist');
+      } else {
+        setError(res.message || "삭제에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("삭제 실패:", err);
+      setError("삭제에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -218,13 +240,12 @@ export default function WishlistDelete() {
 
         {/* 내부 카드 */}
         <InnerCard>
-          {/* 아이템 정보 */}
           <ItemCard>
-            <ItemIcon>{item.icon}</ItemIcon>
+            <ItemIcon>🛍️</ItemIcon>
             <ItemInfo>
-              <ItemName>{item.name}</ItemName>
+              <ItemName>{item.itemName || item.name}</ItemName>
               <ItemPrice>
-                ₩{item.price?.toLocaleString()} - 예산의 {item.ratio}%
+                ₩{(item.price || 0).toLocaleString()}
               </ItemPrice>
               {item.url && (
                 <ItemUrl href={item.url} target="_blank" rel="noreferrer">
@@ -234,10 +255,14 @@ export default function WishlistDelete() {
             </ItemInfo>
           </ItemCard>
 
+          {error && <ErrorMsg>{error}</ErrorMsg>}
+
           {/* 버튼 */}
           <BtnRow>
             <CancelBtn onClick={() => navigate('/wishlist')}>취소</CancelBtn>
-            <DeleteBtn onClick={handleDelete}>삭제하기</DeleteBtn>
+            <DeleteBtn onClick={handleDelete} disabled={loading}>
+              {loading ? "삭제 중..." : "삭제하기"}
+            </DeleteBtn>
           </BtnRow>
         </InnerCard>
       </Container>
