@@ -123,7 +123,7 @@ const CheckButton = styled.button`
 const IdMessage = styled.p`
   font-size: 18px;
   margin-top: 0px;
-  align-items:center;
+  align-items: center;
   color: ${(props) => (props.success ? "green" : "red")};
 `;
 
@@ -165,7 +165,18 @@ export default function Signup() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("NICKNAME", NICKNAME, "ID", ID, "PASSWORD", PASSWORD, "REPASSWORD", REPASSWORD, "EMAIL", EMAIL);
+    console.log(
+      "NICKNAME",
+      NICKNAME,
+      "ID",
+      ID,
+      "PASSWORD",
+      PASSWORD,
+      "REPASSWORD",
+      REPASSWORD,
+      "EMAIL",
+      EMAIL,
+    );
   };
 
   return (
@@ -195,25 +206,33 @@ export default function Signup() {
                   />
                 </FormRow>
 
-        <FormRow>
-            <Label>아이디</Label>
-              <IdArea>
-                <div style={{display: "flex", flexDirection: "column", gap: "4px"}}>
-                <div style={{display: "flex", gap: "11px"}}>
-               <IdInput
-                type="text"
-                placeholder="아이디를 입력해주세요"
-                value={ID}
-                onChange={(e) => setID(e.target.value)}
-                />
-                <CheckButton type="button" onClick={handleCheckId}>
-                중복 확인
-                </CheckButton>
-                </div>
-                {idMessage && <IdMessage success={isAvailable}>{idMessage}</IdMessage>}
-                </div>
-                </IdArea>
-            </FormRow>
+                <FormRow>
+                  <Label>아이디</Label>
+                  <IdArea>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: "11px" }}>
+                        <IdInput
+                          type="text"
+                          placeholder="아이디를 입력해주세요"
+                          value={ID}
+                          onChange={(e) => setID(e.target.value)}
+                        />
+                        <CheckButton type="button" onClick={handleCheckId}>
+                          중복 확인
+                        </CheckButton>
+                      </div>
+                      {idMessage && (
+                        <IdMessage success={isAvailable}>{idMessage}</IdMessage>
+                      )}
+                    </div>
+                  </IdArea>
+                </FormRow>
 
                 <FormRow>
                   <Label>비밀번호</Label>
