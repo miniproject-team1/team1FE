@@ -1,23 +1,9 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getWishlist, purchaseWishlist } from "../api/wishlist";
 
-
-const INITIAL_ITEMS = [
-  { id: 1, icon: "💻", name: "맥북", price: 89000, ratio: 30, status: "대기중" },
-  { id: 2, icon: "🎧", name: "에어팟", price: 89000, ratio: 20, status: "대기중" },
-  { id: 3, icon: "🔋", name: "보조배터리", price: 89000, ratio: 20, status: "대기중" },
-  { id: 4, icon: "⌨️", name: "키보드", price: 89000, ratio: null, status: "완료" },
-];
-
-const BUDGET = 430000;
-const TOTAL = 174000;
-const REMAINING = 256000;
-const SURPLUS = 82000;
-const PURCHASED_COUNT = 1;
-const PURCHASED_AMOUNT = 89000;
-
-
+/* ── Styled Components ── */
 const PageWrapper = styled.div`
   width: 100%;
   min-height: 100vh;
@@ -71,7 +57,6 @@ const AddBtn = styled.button`
   &:hover { opacity: 0.8; }
 `;
 
-/* 합계 카드 */
 const SummaryCard = styled.div`
   width: 100%;
   background: #fff;
@@ -142,7 +127,6 @@ const BarPct = styled.div`
   text-align: right;
 `;
 
-
 const CardRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -189,7 +173,6 @@ const MiniSub = styled.div`
   color: #888;
 `;
 
-/* 테이블 카드 */
 const TableCard = styled.div`
   width: 100%;
   background: #fff;
@@ -287,16 +270,62 @@ const ActionBtn = styled.button`
   margin-left: 4px;
 `;
 
+const LoadingText = styled.div`
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  padding: 40px 0;
+`;
+
 /* ── 컴포넌트 ── */
 export default function Wishlist() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(INITIAL_ITEMS);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [remaining, setRemaining] = useState(0);
 
-  const waitingItems = items.filter(i => i.status === '대기중');
-  const doneItems = items.filter(i => i.status === '완료');
+  // 위시리스트 목록 불러오기
+  const fetchWishlist = async () => {
+    try {
+      setLoading(true);
+      const res = await getWishlist();
+      if (res.success) {
+        const data = res.data;
+        setItems(data.wishItems || []);
+        setRemaining(data.remainingBudget || 0);
+      }
+    } catch (err) {
+      console.error("위시리스트 불러오기 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  // 구매 완료 처리
+  const handlePurchase = async (id) => {
+    try {
+      const res = await purchaseWishlist(id);
+      if (res.success) {
+        // 구매 완료 후 목록 새로고침
+        fetchWishlist();
+      }
+    } catch (err) {
+      console.error("구매 처리 실패:", err);
+    }
+  };
+
+  const waitingItems = items.filter(i => !i.purchased);
+  const doneItems = items.filter(i => i.purchased);
   const allItems = [...waitingItems, ...doneItems];
 
-  const barPct = Math.min(Math.round((TOTAL / BUDGET) * 100), 100);
+  const total = waitingItems.reduce((sum, i) => sum + (i.price || 0), 0);
+  const barPct = remaining > 0 ? Math.min(Math.round((total / remaining) * 100), 100) : 0;
+  const purchasedAmount = doneItems.reduce((sum, i) => sum + (i.price || 0), 0);
+  const surplus = remaining - total;
 
   const now = new Date();
   const monthStr = now.toLocaleString('en-US', { month: 'short' }).toUpperCase();
@@ -304,7 +333,6 @@ export default function Wishlist() {
 
   return (
     <PageWrapper>
-      {/* 날짜 + 제목 */}
       <DateText>{monthStr} {yearStr}</DateText>
       <PageTitle>
         <div className="title">나의<span> 위시리스트</span></div>
@@ -314,7 +342,7 @@ export default function Wishlist() {
       {/* 위시리스트 합계 카드 */}
       <SummaryCard>
         <SummaryLabel>위시리스트 합계</SummaryLabel>
-        <SummaryAmount>₩{TOTAL.toLocaleString()}</SummaryAmount>
+        <SummaryAmount>₩{total.toLocaleString()}</SummaryAmount>
         <SummaryCount>{waitingItems.length}개 항목</SummaryCount>
         <BarLabel>잔여예산대비</BarLabel>
         <BarBg>
@@ -327,13 +355,13 @@ export default function Wishlist() {
       <CardRow>
         <MiniCard>
           <MiniLabel color="#7BAB7B">이번 달 잔여 예산</MiniLabel>
-          <MiniAmount>₩{REMAINING.toLocaleString()}</MiniAmount>
-          <MiniSub>₩{SURPLUS.toLocaleString()} 여유 있음</MiniSub>
+          <MiniAmount>₩{remaining.toLocaleString()}</MiniAmount>
+          <MiniSub>₩{surplus.toLocaleString()} 여유 있음</MiniSub>
         </MiniCard>
         <MiniCard>
           <MiniLabel color="#F5C842">구매 완료</MiniLabel>
-          <MiniAmount>{PURCHASED_COUNT}개</MiniAmount>
-          <MiniSub>₩{PURCHASED_AMOUNT.toLocaleString()} 소비</MiniSub>
+          <MiniAmount>{doneItems.length}개</MiniAmount>
+          <MiniSub>₩{purchasedAmount.toLocaleString()} 소비</MiniSub>
         </MiniCard>
       </CardRow>
 
@@ -343,54 +371,64 @@ export default function Wishlist() {
           <TableTitle>대기 중인 항목</TableTitle>
           <CountBadge>{waitingItems.length}</CountBadge>
         </TableHeader>
-        <Table>
-          <thead>
-            <tr>
-              <Th>#</Th>
-              <Th>항목</Th>
-              <Th>가격</Th>
-              <Th>예산비율</Th>
-              <Th>상태</Th>
-              <Th>선택</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {allItems.map((item, idx) => {
-              const done = item.status === '완료';
-              return (
-                <Tr key={item.id} done={done}>
-                  <Td done={done}>
-                    {done
-                      ? <span style={{ color: '#7BAB7B', fontSize: 16 }}>●</span>
-                      : idx + 1}
-                  </Td>
-                  <Td done={done}>
-                    <ItemName>
-                      <span>{item.icon}</span>
-                      {item.name}
-                    </ItemName>
-                  </Td>
-                  <Td done={done}>₩{item.price.toLocaleString()}</Td>
-                  <Td done={done}>{item.ratio ? `${item.ratio}%` : '—'}</Td>
-                  <Td>
-                    <StatusBadge status={item.status}>{item.status}</StatusBadge>
-                  </Td>
-                  <Td>
-                    {!done && (
-                      <ActionBtn variant="buy">구매</ActionBtn>
-                    )}
-                    <ActionBtn
-                      variant="delete"
-                      onClick={() => navigate('/wishlist-delete', { state: { item } })}
-                    >
-                      삭제
-                    </ActionBtn>
-                  </Td>
-                </Tr>
-              );
-            })}
-          </tbody>
-        </Table>
+
+        {loading ? (
+          <LoadingText>불러오는 중...</LoadingText>
+        ) : allItems.length === 0 ? (
+          <LoadingText>위시리스트가 비어있어요!</LoadingText>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <Th>#</Th>
+                <Th>항목</Th>
+                <Th>가격</Th>
+                <Th>상태</Th>
+                <Th>선택</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {allItems.map((item, idx) => {
+                const done = item.purchased;
+                const status = done ? '완료' : '대기중';
+                return (
+                  <Tr key={item.id} done={done}>
+                    <Td done={done}>
+                      {done
+                        ? <span style={{ color: '#7BAB7B', fontSize: 16 }}>●</span>
+                        : idx + 1}
+                    </Td>
+                    <Td done={done}>
+                      <ItemName>
+                        {item.itemName}
+                      </ItemName>
+                    </Td>
+                    <Td done={done}>₩{(item.price || 0).toLocaleString()}</Td>
+                    <Td>
+                      <StatusBadge status={status}>{status}</StatusBadge>
+                    </Td>
+                    <Td>
+                      {!done && (
+                        <ActionBtn
+                          variant="buy"
+                          onClick={() => handlePurchase(item.id)}
+                        >
+                          구매
+                        </ActionBtn>
+                      )}
+                      <ActionBtn
+                        variant="delete"
+                        onClick={() => navigate('/wishlist-delete', { state: { item } })}
+                      >
+                        삭제
+                      </ActionBtn>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        )}
       </TableCard>
     </PageWrapper>
   );

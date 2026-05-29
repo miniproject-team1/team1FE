@@ -1,6 +1,7 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { addWishlist, getWishlist } from "../api/wishlist";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -21,7 +22,6 @@ const Container = styled.div`
   flex-direction: column;
 `;
 
-/* ── 헤더 영역 ── */
 const Header = styled.div`
   background: rgba(213, 229, 213, 0.50);
   border: 1px solid #D5E5D5;
@@ -98,7 +98,6 @@ const CloseBtn = styled.button`
   &:hover { opacity: 0.7; }
 `;
 
-/* ── 입력 카드 ── */
 const InnerCard = styled.div`
   background: #fff;
   border: 1px solid #D5E5D5;
@@ -144,7 +143,6 @@ const FieldInput = styled.input`
   &:focus { border-color: #7BAB7B; }
 `;
 
-/* 잔여예산 행 */
 const BudgetRow = styled.div`
   width: 100%;
   display: flex;
@@ -162,7 +160,6 @@ const BudgetRow = styled.div`
   text-align: left;
 `;
 
-/* 그라데이션 바 + 텍스트 */
 const RatioBarWrap = styled.div`
   width: 100%;
   border-radius: 8px;
@@ -258,17 +255,39 @@ const AddBtn = styled.button`
   &:hover { opacity: 0.8; }
 `;
 
-const REMAINING = 256000;
+const ErrorMsg = styled.div`
+  font-size: 12px;
+  color: #E84B6A;
+  text-align: center;
+`;
 
 export default function WishlistPlus() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [url, setUrl] = useState("");
+  const [remaining, setRemaining] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // 잔여예산 불러오기
+  useEffect(() => {
+    const fetchRemaining = async () => {
+      try {
+        const res = await getWishlist();
+        if (res.success) {
+          setRemaining(res.data.remainingBudget || 0);
+        }
+      } catch (err) {
+        console.error("잔여예산 불러오기 실패:", err);
+      }
+    };
+    fetchRemaining();
+  }, []);
 
   const priceNum = parseInt(price.replace(/,/g, "")) || 0;
-  const ratio = REMAINING > 0 ? Math.round((priceNum / REMAINING) * 100) : 0;
-  const surplus = REMAINING - priceNum;
+  const ratio = remaining > 0 ? Math.round((priceNum / remaining) * 100) : 0;
+  const surplus = remaining - priceNum;
 
   const handlePaste = async () => {
     try {
@@ -279,15 +298,36 @@ export default function WishlistPlus() {
     }
   };
 
-  const handleAdd = () => {
-    if (!name.trim() || !price.trim()) return;
-    navigate('/wishlist');
+  // 추가하기 버튼
+  const handleAdd = async () => {
+    if (!name.trim() || !price.trim()) {
+      setError("이름과 가격을 입력해주세요.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await addWishlist({
+        itemName: name,
+        price: priceNum,
+        url: url || "",
+      });
+      if (res.success) {
+        navigate('/wishlist');
+      } else {
+        setError(res.message || "추가에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("추가 실패:", err);
+      setError("추가에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <PageWrapper>
       <Container>
-        {/* 헤더 */}
         <Header>
           <HeaderLeft>
             <PlusCircle>+</PlusCircle>
@@ -299,9 +339,7 @@ export default function WishlistPlus() {
           <CloseBtn onClick={() => navigate('/wishlist')}>X</CloseBtn>
         </Header>
 
-        {/* 입력 카드 */}
         <InnerCard>
-
           {/* 이름 */}
           <FieldGroup>
             <FieldLabel>이름</FieldLabel>
@@ -327,7 +365,7 @@ export default function WishlistPlus() {
             <FieldLabel>예산 대비 비율</FieldLabel>
             <BudgetRow>
               <span>잔여예산</span>
-              <span>₩{REMAINING.toLocaleString()}</span>
+              <span>₩{remaining.toLocaleString()}</span>
             </BudgetRow>
             {priceNum > 0 && (
               <RatioBarWrap>
@@ -353,12 +391,15 @@ export default function WishlistPlus() {
             </UrlRow>
           </FieldGroup>
 
+          {error && <ErrorMsg>{error}</ErrorMsg>}
+
           {/* 버튼 */}
           <BtnRow>
             <CancelBtn onClick={() => navigate('/wishlist')}>취소</CancelBtn>
-            <AddBtn onClick={handleAdd}>+위시리스트에 추가하기</AddBtn>
+            <AddBtn onClick={handleAdd} disabled={loading}>
+              {loading ? "추가 중..." : "+위시리스트에 추가하기"}
+            </AddBtn>
           </BtnRow>
-
         </InnerCard>
       </Container>
     </PageWrapper>
