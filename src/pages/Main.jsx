@@ -1,21 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import happyEmoji from "../assets/emoji/happy.png";
+import smileEmoji from "../assets/emoji/smile.png";
+import neutralEmoji from "../assets/emoji/neutral.png";
+import sadEmoji from "../assets/emoji/sad.png";
+import angryEmoji from "../assets/emoji/angry.png";
+
+const BASE_URL = "https://team1.z0.co.kr";
+
+const EMOJI_MAP = {
+  HAPPY: happyEmoji,
+  SMILE: smileEmoji,
+  NEUTRAL: neutralEmoji,
+  SAD: sadEmoji,
+  ANGRY: angryEmoji,
+};
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thr", "Fri", "Sat", "Sun"];
-
-const MOCK_ENTRIES = {
-  "2026-5-1":  [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-2":  [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-4":  [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-5":  [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-8":  [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-12": [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-15": [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-19": [{ name: "아름 꽃 구매", amount: "₩52000" }],
-  "2026-5-22": [{ name: "아름 꽃 구매", amount: "₩52000" }],
-};
 
 function getCalendarWeeks(year, month) {
   const firstDay = new Date(year, month, 1);
@@ -46,7 +50,9 @@ function getCalendarWeeks(year, month) {
 }
 
 export default function Main() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarData, setCalendarData] = useState(null);
   const today = new Date();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -57,14 +63,31 @@ export default function Main() {
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
+  useEffect(() => {
+    async function fetchCalendar() {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await axios.get(`${BASE_URL}/api/v1/calendar/${year}/${month + 1}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("캘린더 조회 성공", response.data);
+        setCalendarData(response.data.data);
+      } catch (error) {
+        console.error("캘린더 조회 실패", error.response?.data || error.message);
+      }
+    }
+    fetchCalendar();
+  }, [year, month]);
+
   const isToday = (date) =>
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
 
-  const getEntries = (date) => {
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-    return MOCK_ENTRIES[key] || [];
+  const getDayData = (date) => {
+    if (!calendarData?.days) return null;
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return calendarData.days.find((d) => d.date === key) || null;
   };
 
   return (
@@ -75,8 +98,18 @@ export default function Main() {
           <BudgetBar>
             <BudgetRow>
               <BudgetLabel>이번 달 예산 |</BudgetLabel>
-              <BudgetAmount>174000 / 500000</BudgetAmount>
-              <BudgetAvailable>326000 사용가능</BudgetAvailable>
+              <BudgetAmount $over={calendarData && calendarData.totalSpending > calendarData.budgetAmount}>
+                {calendarData
+                  ? `${calendarData.totalSpending.toLocaleString()} / ${calendarData.budgetAmount.toLocaleString()}`
+                  : "-"}
+              </BudgetAmount>
+              <BudgetAvailable $over={calendarData && calendarData.totalSpending > calendarData.budgetAmount}>
+                {calendarData
+                  ? calendarData.totalSpending > calendarData.budgetAmount
+                    ? "예산초과!!!"
+                    : `${calendarData.remainingBudget.toLocaleString()} 사용가능`
+                  : ""}
+              </BudgetAvailable>
             </BudgetRow>
           </BudgetBar>
         </LeftSection>
@@ -103,10 +136,11 @@ export default function Main() {
               {weeks.map((week, wi) => (
                 <WeekRow key={wi}>
                   {week.map((dayObj, di) => {
-                    const entries = getEntries(dayObj.date);
                     const todayFlag = isToday(dayObj.date);
                     const isBottomLeft = wi === lastWeekIndex && di === 0;
                     const isBottomRight = wi === lastWeekIndex && di === 6;
+                    const dayData = getDayData(dayObj.date);
+                    const dateStr = `${dayObj.date.getFullYear()}-${dayObj.date.getMonth() + 1}-${dayObj.date.getDate()}`;
                     return (
                       <DayCell
                         key={di}
@@ -116,18 +150,19 @@ export default function Main() {
                         $isBottomRight={isBottomRight}
                       >
                         <CellTopRow>
-                          {dayObj.currentMonth && <EmojiImg src={happyEmoji} alt="emoji" />}
+                          {dayObj.currentMonth && dayData?.emoji && (
+                            <EmojiImg src={EMOJI_MAP[dayData.emoji]} alt="emoji" />
+                          )}
                           <DateNumber>{dayObj.date.getDate()}</DateNumber>
                         </CellTopRow>
-                        {entries.map((entry, ei) => (
-                          <EntryBox key={ei}>
+                        {dayData?.hasExpense && (
+                          <EntryBox onClick={() => navigate("/diary", { state: { date: dateStr } })}>
                             <EntryTextGroup>
-                              <EntryName>{entry.name}</EntryName>
-                              <EntryAmount>{entry.amount}</EntryAmount>
+                              <EntryAmount>₩{dayData.daySpending.toLocaleString()}</EntryAmount>
                             </EntryTextGroup>
                             <EntryDivider />
                           </EntryBox>
-                        ))}
+                        )}
                       </DayCell>
                     );
                   })}
@@ -209,18 +244,18 @@ const BudgetLabel = styled.span`
 `;
 
 const BudgetAmount = styled.span`
-  color: #000;
+  color: ${({ $over }) => ($over ? "#E84B6A" : "#000")};
   font-family: "S-Core Dream", sans-serif;
   font-size: 15px;
-  font-weight: 300;
+  font-weight: ${({ $over }) => ($over ? 600 : 300)};
   line-height: normal;
 `;
 
 const BudgetAvailable = styled.span`
-  color: #9ba0aa;
+  color: ${({ $over }) => ($over ? "#E84B6A" : "#9ba0aa")};
   font-family: "S-Core Dream", sans-serif;
   font-size: 15px;
-  font-weight: 300;
+  font-weight: ${({ $over }) => ($over ? 600 : 300)};
   line-height: normal;
 `;
 
@@ -360,6 +395,8 @@ const EntryBox = styled.div`
   align-self: stretch;
   border-radius: 5px;
   background: rgba(213, 229, 213, 0.5);
+  cursor: pointer;
+  &:hover { background: rgba(213, 229, 213, 0.8); }
 `;
 
 const EntryTextGroup = styled.div`
