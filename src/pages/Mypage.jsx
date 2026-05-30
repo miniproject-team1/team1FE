@@ -1,11 +1,22 @@
 import styled from "styled-components";
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import happyEmoji from '../assets/emoji/happy.png';
 import smileEmoji from '../assets/emoji/smile.png';
 import neutralEmoji from '../assets/emoji/neutral.png';
 import sadEmoji from '../assets/emoji/sad.png';
 import angryEmoji from '../assets/emoji/angry.png';
+
+const BASE_URL = "https://team1.z0.co.kr";
+
+const EMOJI_MAP = {
+  HAPPY: happyEmoji,
+  SMILE: smileEmoji,
+  NEUTRAL: neutralEmoji,
+  SAD: sadEmoji,
+  ANGRY: angryEmoji,
+};
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -123,6 +134,23 @@ const AmountBox = styled.div`
 
 const AmountBoxAlt = styled(AmountBox)`
   border: 1px solid #D5E5D5;
+`;
+
+const BudgetInput = styled.input`
+  display: flex;
+  height: clamp(40px, 4vw, 55px);
+  padding: 4px 16px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #C7D9DD;
+  background: rgba(213, 229, 213, 0.50);
+  font-size: clamp(14px, 1.5vw, 20px);
+  font-weight: 600;
+  color: #2A2A2A;
+  font-family: "S-Core Dream", sans-serif;
+  box-sizing: border-box;
+  outline: none;
+  &::placeholder { color: #aaa; font-weight: 400; }
 `;
 
 const SaveBtn = styled.button`
@@ -250,70 +278,57 @@ const EmojiItem = styled.div`
 
 export default function Mypage() {
   const navigate = useNavigate();
-  const [month, setMonth] = useState(5);
-  const [budget, setBudget] = useState(null);
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [budgetInput, setBudgetInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const year = new Date().getFullYear();
+  const period = `${year}${String(month).padStart(2, '0')}`;
+
   useEffect(() => {
-  async function fetchBudget() {
-    try {
-      const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    async function fetchData() {
       const token = localStorage.getItem("accessToken");
-      console.log(token);
-      const getResponse = await fetch(
-        `${BASE_URL}/api/v1/budgets/2026/5`,
-        {
-         headers: {
-          Authorization: `Bearer ${token}`,
-         },
-        }
-      );
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const [budgetRes, summaryRes] = await Promise.all([
+          axios.get(`${BASE_URL}/api/v1/budgets/${year}/${month}`, { headers }),
+          axios.get(`${BASE_URL}/api/v1/analytics/summary`, { headers, params: { period } }),
+        ]);
+        console.log("예산 조회 성공", budgetRes.data);
+        const amount = budgetRes.data.data?.budgetAmount;
+        setBudgetInput(amount != null ? String(amount) : "");
 
-      const getData = await getResponse.json();
-
-      console.log(getData);
-
-
-      const putResponse = await fetch(
-        `${BASE_URL}/api/v1/budgets/2026/5`,
-        {
-          method:"PUT",
-
-          headers:{
-            "Content-Type":"application/json",
-            Authorization: `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            budgetAmount:1073741824,
-          }),
-        }
-      );
-
-      const putData = await putResponse.json();
-
-      console.log(putData);
-
-      setBudget(putData.data);
-      
-
-    const sumResponse = await fetch(
-        `${BASE_URL}/api/v1/analytics/summary`,
-        {
-         headers: {
-          Authorization: `Bearer ${token}`,
-         },
-        }
-      );
-
-      const sumData = await sumResponse.json();
-
-      console.log(sumData);
-      
-    } catch(error) {
-      console.error(error);
+        console.log("분석 조회 성공", summaryRes.data);
+        setSummary(summaryRes.data.data);
+      } catch (error) {
+        console.error("데이터 조회 실패", error.response?.data || error.message);
+      }
     }
-  }
-    fetchBudget();
-    }, []);
+    fetchData();
+  }, [month]);
+
+  const handleSaveBudget = async () => {
+    if (!budgetInput) {
+      alert("예산을 입력해주세요");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.put(
+        `${BASE_URL}/api/v1/budgets/${year}/${month}`,
+        { budgetAmount: Number(budgetInput) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("예산 저장 성공", response.data);
+      alert("예산이 저장되었습니다!");
+    } catch (error) {
+      console.error("예산 저장 실패", error.response?.data || error.message);
+      alert("예산 저장에 실패했습니다");
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <PageWrapper>
       <MainCard>
@@ -331,10 +346,15 @@ export default function Mypage() {
           <LeftCol>
             <SmallCard>
               <CardLabel>{month}월 예산</CardLabel>
-              <AmountBox>
-                ₩{budget?.budgetAmount?.toLocaleString()}
-              </AmountBox>
-              <SaveBtn>저장</SaveBtn>
+              <BudgetInput
+                type="number"
+                value={budgetInput}
+                onChange={(e) => setBudgetInput(e.target.value)}
+                placeholder="예산을 입력해주세요"
+              />
+              <SaveBtn onClick={handleSaveBudget} disabled={isSaving}>
+                {isSaving ? "저장 중..." : "저장"}
+              </SaveBtn>
             </SmallCard>
 
             <SmallCardAlt>
@@ -349,7 +369,9 @@ export default function Mypage() {
                 </MonthNavBtn>
                 <SideMonth>{month + 1}월</SideMonth>
               </MonthNav>
-              <AmountBox>₩ 174,000</AmountBox>
+              <AmountBox>
+                {summary != null ? `₩ ${summary.totalSpending.toLocaleString()}` : "-"}
+              </AmountBox>
             </SmallCardAlt>
 
             <SmallCardAlt>
@@ -364,7 +386,9 @@ export default function Mypage() {
                 </MonthNavBtn>
                 <SideMonth>{month + 1}월</SideMonth>
               </MonthNav>
-              <AmountBoxAlt>₩ 74,000</AmountBoxAlt>
+              <AmountBoxAlt>
+                {summary != null ? `₩ ${summary.regretSpending.toLocaleString()}` : "-"}
+              </AmountBoxAlt>
             </SmallCardAlt>
           </LeftCol>
 
@@ -372,42 +396,36 @@ export default function Mypage() {
             <BigCard>
               <CardLabel>충동 소비 비율</CardLabel>
               <BarRow>
-                <BarWrap><BarFill pct={56} /></BarWrap>
-                <PctLabel>56%</PctLabel>
+                <BarWrap>
+                  <BarFill pct={summary ? Math.round(summary.impulseRatio * 100) : 0} />
+                </BarWrap>
+                <PctLabel>{summary ? `${Math.round(summary.impulseRatio * 100)}%` : "-"}</PctLabel>
               </BarRow>
             </BigCard>
 
             <BigCard>
               <CardLabel>예산 달성률</CardLabel>
               <BarRow>
-                <BarWrap><BarFill pct={73} /></BarWrap>
-                <PctLabel>73%</PctLabel>
+                <BarWrap>
+                  <BarFill pct={summary ? Math.round(summary.budgetUsedRatio * 100) : 0} />
+                </BarWrap>
+                <PctLabel>{summary ? `${Math.round(summary.budgetUsedRatio * 100)}%` : "-"}</PctLabel>
               </BarRow>
             </BigCard>
 
             <BigCard>
               <CardLabel>감정별 소비 횟수</CardLabel>
               <EmojiBoxContainer>
-                <EmojiItem>
-                  <img src={happyEmoji} alt="행복" className="emoji" />
-                  <span className="count">10회</span>
-                </EmojiItem>
-                <EmojiItem>
-                  <img src={smileEmoji} alt="미소" className="emoji" />
-                  <span className="count">12회</span>
-                </EmojiItem>
-                <EmojiItem>
-                  <img src={neutralEmoji} alt="보통" className="emoji" />
-                  <span className="count">3회</span>
-                </EmojiItem>
-                <EmojiItem>
-                  <img src={sadEmoji} alt="슬픔" className="emoji" />
-                  <span className="count">14회</span>
-                </EmojiItem>
-                <EmojiItem>
-                  <img src={angryEmoji} alt="화남" className="emoji" />
-                  <span className="count">19회</span>
-                </EmojiItem>
+                {summary?.emotionCounts?.length > 0 ? (
+                  summary.emotionCounts.map((item) => (
+                    <EmojiItem key={item.emoji}>
+                      <img src={EMOJI_MAP[item.emoji]} alt={item.emoji} className="emoji" />
+                      <span className="count">{item.count}회</span>
+                    </EmojiItem>
+                  ))
+                ) : (
+                  <span style={{ color: "#aaa", fontSize: "16px" }}>소비 기록이 없습니다</span>
+                )}
               </EmojiBoxContainer>
             </BigCard>
           </RightCol>
