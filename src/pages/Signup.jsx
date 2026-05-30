@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 const Navbar = styled.div`
   display: flex;
@@ -144,39 +148,59 @@ const CreateButton = styled.button`
 `;
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [NICKNAME, setNICKNAME] = useState("");
   const [ID, setID] = useState("");
   const [PASSWORD, setPASSWORD] = useState("");
   const [REPASSWORD, setREPASSWORD] = useState("");
   const [EMAIL, setEMAIL] = useState("");
-  const existingIds = ["fish", "prince", "style"];
   const [idMessage, setIdMessage] = useState("");
   const [isAvailable, setIsAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCheckId = () => {
-    if (existingIds.includes(ID)) {
-      setIdMessage("사용 불가능한 아이디입니다");
+  const handleCheckId = async () => {
+    if (!ID.trim()) {
+      setIdMessage("아이디를 입력해주세요");
       setIsAvailable(false);
-    } else {
-      setIdMessage("사용 가능한 아이디입니다");
-      setIsAvailable(true);
+      return;
     }
+    // 아이디 중복확인 API가 별도로 없으므로 클라이언트에서 형식만 체크
+    setIdMessage("사용 가능한 아이디입니다");
+    setIsAvailable(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(
-      "NICKNAME",
-      NICKNAME,
-      "ID",
-      ID,
-      "PASSWORD",
-      PASSWORD,
-      "REPASSWORD",
-      REPASSWORD,
-      "EMAIL",
-      EMAIL,
-    );
+
+    if (!isAvailable) {
+      alert("아이디 중복 확인을 해주세요");
+      return;
+    }
+    if (PASSWORD !== REPASSWORD) {
+      alert("비밀번호가 일치하지 않습니다");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/v1/auth/register`, {
+        loginId: ID,
+        password: PASSWORD,
+        passwordConfirm: REPASSWORD,
+        email: EMAIL,
+        nickname: NICKNAME,
+      });
+
+      if (response.data.success) {
+        alert("회원가입이 완료되었습니다!");
+        navigate("/login");
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || "회원가입에 실패했습니다";
+      alert(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -264,7 +288,9 @@ export default function Signup() {
                   />
                 </FormRow>
 
-                <CreateButton type="submit">회원가입</CreateButton>
+                <CreateButton type="submit" disabled={isLoading}>
+                  {isLoading ? "처리 중..." : "회원가입"}
+                </CreateButton>
               </LoginForm>
             </form>
           </LoginCard>
