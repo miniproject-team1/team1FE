@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import happyEmoji from '../assets/emoji/happy.png';
 import smileEmoji from '../assets/emoji/smile.png';
@@ -251,7 +251,69 @@ const EmojiItem = styled.div`
 export default function Mypage() {
   const navigate = useNavigate();
   const [month, setMonth] = useState(5);
+  const [budget, setBudget] = useState(null);
+  useEffect(() => {
+  async function fetchBudget() {
+    try {
+      const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+      const token = localStorage.getItem("accessToken");
+      console.log(token);
+      const getResponse = await fetch(
+        `${BASE_URL}/api/v1/budgets/2026/5`,
+        {
+         headers: {
+          Authorization: `Bearer ${token}`,
+         },
+        }
+      );
 
+      const getData = await getResponse.json();
+
+      console.log(getData);
+
+
+      const putResponse = await fetch(
+        `${BASE_URL}/api/v1/budgets/2026/5`,
+        {
+          method:"PUT",
+
+          headers:{
+            "Content-Type":"application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            budgetAmount:1073741824,
+          }),
+        }
+      );
+
+      const putData = await putResponse.json();
+
+      console.log(putData);
+
+      setBudget(putData.data);
+      
+
+    const sumResponse = await fetch(
+        `${BASE_URL}/api/v1/analytics/summary`,
+        {
+         headers: {
+          Authorization: `Bearer ${token}`,
+         },
+        }
+      );
+
+      const sumData = await sumResponse.json();
+
+      console.log(sumData);
+      
+    } catch(error) {
+      console.error(error);
+    }
+  }
+    fetchBudget();
+    }, []);
   return (
     <PageWrapper>
       <MainCard>
@@ -269,7 +331,9 @@ export default function Mypage() {
           <LeftCol>
             <SmallCard>
               <CardLabel>{month}월 예산</CardLabel>
-              <AmountBox>₩ 500,000</AmountBox>
+              <AmountBox>
+                ₩{budget?.budgetAmount?.toLocaleString()}
+              </AmountBox>
               <SaveBtn>저장</SaveBtn>
             </SmallCard>
 
