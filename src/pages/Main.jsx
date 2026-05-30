@@ -148,6 +148,8 @@ export default function Main() {
                         $currentMonth={dayObj.currentMonth}
                         $isBottomLeft={isBottomLeft}
                         $isBottomRight={isBottomRight}
+                        onClick={() => dayObj.currentMonth && navigate("/diary", { state: { date: dateStr } })}
+                        style={{ cursor: dayObj.currentMonth ? "pointer" : "default" }}
                       >
                         <CellTopRow>
                           {dayObj.currentMonth && dayData?.emoji && (
@@ -156,7 +158,7 @@ export default function Main() {
                           <DateNumber>{dayObj.date.getDate()}</DateNumber>
                         </CellTopRow>
                         {dayData?.hasExpense && (
-                          <EntryBox onClick={() => navigate("/diary", { state: { date: dateStr } })}>
+                          <EntryBox>
                             <EntryTextGroup>
                               <EntryAmount>₩{dayData.daySpending.toLocaleString()}</EntryAmount>
                             </EntryTextGroup>
