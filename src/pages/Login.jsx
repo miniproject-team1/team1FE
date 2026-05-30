@@ -1,20 +1,46 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 export default function Login() {
   const navigate = useNavigate();
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!id || !password) {
       setError(true);
       return;
     }
-    setError(false);
-    navigate("/main");
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/v1/auth/login`, {
+        loginId: id,
+        password: password,
+      });
+
+      if (response.data.success) {
+        const { accessToken, tokenType, userId, nickname } = response.data.data;
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("tokenType", tokenType);
+        localStorage.setItem("userId", userId);
+        localStorage.setItem("nickname", nickname);
+        console.log("로그인 성공", response.data);
+        setError(false);
+        navigate("/main");
+      }
+    } catch (error) {
+      console.error("로그인 실패", error.response?.data || error.message);
+      setError(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -42,7 +68,9 @@ export default function Login() {
           />
         </FieldRow>
 
-        <LoginButton onClick={handleLogin}>로그인하기</LoginButton>
+        <LoginButton onClick={handleLogin} disabled={isLoading}>
+          {isLoading ? "처리 중..." : "로그인하기"}
+        </LoginButton>
         <SignupLink onClick={() => navigate("/signup")}>회원가입</SignupLink>
       </LoginCard>
 
