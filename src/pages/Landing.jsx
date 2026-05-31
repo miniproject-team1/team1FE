@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import backgroundImg from "../assets/background.png";
 import pigImg from "../assets/pig.png";
+import logoImg from "../assets/logo.png";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ export default function Landing() {
 const Wrapper = styled.div`
   width: 100%;
   min-height: 100vh;
-  background: url(${backgroundImg}) center / cover no-repeat;
+  background: linear-gradient(rgba(252, 255, 157, 0.2), rgba(252, 255, 157, 0.2)),
+              url(${backgroundImg}) center / cover no-repeat;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -68,6 +70,13 @@ const MainText = styled.p`
   font-weight: 500;
   line-height: normal;
   margin: 0;
+`;
+
+const LogoImage = styled.img`
+  height: 160px;
+  object-fit: contain;
+  align-self: flex-end;
+  margin-top: 40px;
 `;
 
 const PigImage = styled.img`

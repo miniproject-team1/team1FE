@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
+import logoImg from "../assets/logo.png";
 
 const HeaderWrapper = styled.header`
   width: 100%;
@@ -13,13 +14,11 @@ const HeaderWrapper = styled.header`
   border-bottom: 1px solid #e0e0e0;
 `;
 
-const Logo = styled.div`
-  color: #000;
-  font-family: "S-Core Dream", sans-serif;
-  font-size: 28px;
-  font-style: normal;
-  font-weight: 200;
-  line-height: normal;
+const LogoImg = styled.img`
+  height: 48px;
+  object-fit: contain;
+  cursor: pointer;
+  transform: translateY(-6px);
 `;
 
 const Nav = styled.nav`
@@ -45,7 +44,7 @@ export default function Header() {
 
   return (
     <HeaderWrapper>
-      <Logo>로고</Logo>
+      <LogoImg src={logoImg} alt="logo" onClick={() => navigate("/")} />
       <Nav>
         <NavItem $active={pathname === "/main"} onClick={() => navigate("/main")}>Home</NavItem>
         <NavItem $active={pathname === "/wishlist"} onClick={() => navigate("/wishlist")}>Wishlist</NavItem>
