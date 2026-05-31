@@ -1,7 +1,10 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { getWishlist, purchaseWishlist } from "../api/wishlist";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 /* ── Styled Components ── */
 const PageWrapper = styled.div`
@@ -25,9 +28,8 @@ const DateText = styled.div`
 
 const PageTitle = styled.h1`
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(24px, 3vw, 36px);
-  font-style: normal;
-  font-weight: 200;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 500;
   color: #000;
   margin: 0 0 clamp(16px, 2vw, 28px) 0;
   display: flex;
@@ -37,9 +39,10 @@ const PageTitle = styled.h1`
   .title {
     display: flex;
     align-items: center;
+    gap: 8px;
   }
 
-  span { color: #14752C; }
+  span { color: #E84B6A; }
 `;
 
 const AddBtn = styled.button`
@@ -246,8 +249,8 @@ const StatusBadge = styled.span`
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  background: ${({ status }) => status === '완료' ? '#D5E5D5' : '#FFD6D6'};
-  color: ${({ status }) => status === '완료' ? '#3a6a3a' : '#c0392b'};
+  background: #D5E5D5;
+  color: #3a6a3a;
 `;
 
 const ActionBtn = styled.button`
@@ -288,12 +291,18 @@ export default function Wishlist() {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const res = await getWishlist();
-      if (res.success) {
-        const data = res.data;
-        setItems(data.wishItems || []);
-        setRemaining(data.remainingBudget || 0);
+      const token = localStorage.getItem("accessToken");
+      const now = new Date();
+      const [wishRes, calendarRes] = await Promise.all([
+        getWishlist(),
+        axios.get(`${BASE_URL}/api/v1/calendar/${now.getFullYear()}/${now.getMonth() + 1}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      if (wishRes.success) {
+        setItems(wishRes.data.wishItems || []);
       }
+      setRemaining(calendarRes.data.data?.remainingBudget || 0);
     } catch (err) {
       console.error("위시리스트 불러오기 실패:", err);
     } finally {
@@ -333,9 +342,8 @@ export default function Wishlist() {
 
   return (
     <PageWrapper>
-      <DateText>{monthStr} {yearStr}</DateText>
       <PageTitle>
-        <div className="title">나의<span> 위시리스트</span></div>
+        <div className="title">나의<span>위시리스트</span></div>
         <AddBtn onClick={() => navigate('/wishlist-plus')}>+ 새 항목 추가</AddBtn>
       </PageTitle>
 
@@ -356,7 +364,6 @@ export default function Wishlist() {
         <MiniCard>
           <MiniLabel color="#7BAB7B">이번 달 잔여 예산</MiniLabel>
           <MiniAmount>₩{remaining.toLocaleString()}</MiniAmount>
-          <MiniSub>₩{surplus.toLocaleString()} 여유 있음</MiniSub>
         </MiniCard>
         <MiniCard>
           <MiniLabel color="#F5C842">구매 완료</MiniLabel>
@@ -390,7 +397,6 @@ export default function Wishlist() {
             <tbody>
               {allItems.map((item, idx) => {
                 const done = item.purchased;
-                const status = done ? '완료' : '대기중';
                 return (
                   <Tr key={item.id} done={done}>
                     <Td done={done}>
@@ -405,7 +411,7 @@ export default function Wishlist() {
                     </Td>
                     <Td done={done}>₩{(item.price || 0).toLocaleString()}</Td>
                     <Td>
-                      <StatusBadge status={status}>{status}</StatusBadge>
+                      {done && <StatusBadge status="완료">완료</StatusBadge>}
                     </Td>
                     <Td>
                       {!done && (

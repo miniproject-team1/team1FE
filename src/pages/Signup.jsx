@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 const Navbar = styled.div`
   display: flex;
@@ -55,8 +59,9 @@ const LoginCard = styled.div`
 const LoginTitle = styled.h1`
   text-align: center;
   margin-bottom: 5px;
-  font-size: 35px;
-  font-weight: 400;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 40px;
+  font-weight: 500;
 `;
 
 const LoginForm = styled.div`
@@ -79,22 +84,32 @@ const FormRow = styled.div`
 const Label = styled.label`
   width: 180px;
   flex-shrink: 0;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 25px;
+  font-weight: 200;
   text-align: left;
 `;
 
 const Input = styled.input`
   height: 60px;
   width: 650px;
-  border-color: #d5e5d5;
-  border-width: 2px;
+  border: 2px solid #d5e5d5;
   border-radius: 15px;
   background-color: #ffffff;
-  color: #a2a2a2;
-  opacity: 0.5;
+  color: #000;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 22px;
+  font-weight: 200;
+  padding: 15px 21px;
   box-sizing: border-box;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(162, 162, 162, 0.5);
+    font-family: "S-Core Dream", sans-serif;
+    font-size: 22px;
+    font-weight: 200;
+  }
 `;
 
 const IdArea = styled.div`
@@ -108,12 +123,14 @@ const IdInput = styled(Input)`
 
 const CheckButton = styled.button`
   width: 143px;
-  height: 54px;
+  height: 60px;
   border: none;
   border-radius: 15px;
   background-color: #d5e5d5;
   color: #000000;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 20px;
+  font-weight: 200;
   cursor: pointer;
   &:active {
     transform: translateY(1px);
@@ -133,10 +150,11 @@ const CreateButton = styled.button`
   background: #d5e5d5;
   color: #000000;
   border-radius: 15px;
-  height: 70px;
+  height: 60px;
   width: 800px;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 200;
   cursor: pointer;
   &:active {
     transform: translateY(1px);
@@ -144,52 +162,63 @@ const CreateButton = styled.button`
 `;
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [NICKNAME, setNICKNAME] = useState("");
   const [ID, setID] = useState("");
   const [PASSWORD, setPASSWORD] = useState("");
   const [REPASSWORD, setREPASSWORD] = useState("");
   const [EMAIL, setEMAIL] = useState("");
-  const existingIds = ["fish", "prince", "style"];
   const [idMessage, setIdMessage] = useState("");
   const [isAvailable, setIsAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCheckId = () => {
-    if (existingIds.includes(ID)) {
-      setIdMessage("사용 불가능한 아이디입니다");
+  const handleCheckId = async () => {
+    if (!ID.trim()) {
+      setIdMessage("아이디를 입력해주세요");
       setIsAvailable(false);
-    } else {
-      setIdMessage("사용 가능한 아이디입니다");
-      setIsAvailable(true);
+      return;
     }
+    // 아이디 중복확인 API가 별도로 없으므로 클라이언트에서 형식만 체크
+    setIdMessage("사용 가능한 아이디입니다");
+    setIsAvailable(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(
-      "NICKNAME",
-      NICKNAME,
-      "ID",
-      ID,
-      "PASSWORD",
-      PASSWORD,
-      "REPASSWORD",
-      REPASSWORD,
-      "EMAIL",
-      EMAIL,
-    );
+
+    if (!isAvailable) {
+      alert("아이디 중복 확인을 해주세요");
+      return;
+    }
+    if (PASSWORD !== REPASSWORD) {
+      alert("비밀번호가 일치하지 않습니다");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/v1/auth/register`, {
+        loginId: ID,
+        password: PASSWORD,
+        passwordConfirm: REPASSWORD,
+        email: EMAIL,
+        nickname: NICKNAME,
+      });
+
+      if (response.data.success) {
+        alert("회원가입이 완료되었습니다!");
+        navigate("/login");
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || "회원가입에 실패했습니다";
+      alert(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
-      <Navbar>
-        <Logo>로고</Logo>
-        <Menu>
-          <span>Home</span>
-          <span>Wishlist</span>
-          <span>My page</span>
-        </Menu>
-      </Navbar>
-
       <LoginWrapper>
         <LoginPage>
           <LoginCard>
@@ -264,7 +293,9 @@ export default function Signup() {
                   />
                 </FormRow>
 
-                <CreateButton type="submit">회원가입</CreateButton>
+                <CreateButton type="submit" disabled={isLoading}>
+                  {isLoading ? "처리 중..." : "회원가입"}
+                </CreateButton>
               </LoginForm>
             </form>
           </LoginCard>

@@ -1,13 +1,13 @@
 // 소비 기록 패널 - 소비 항목 입력, 소비 이유 선택, 만족도 별점, 저장 버튼
 import { useState, useRef } from "react";
 import styled from "styled-components";
-import { AiOutlineStar, AiFillStar, AiOutlinePlus } from "react-icons/ai";
+import { AiOutlineStar, AiFillStar, AiOutlinePlus, AiOutlineClose } from "react-icons/ai";
 import CustomSelect from "./CustomSelect";
 
 const CATEGORIES = ["식비", "쇼핑", "교통", "주거,생활", "문화,여가", "건강", "자기계발"];
 const SPEND_REASONS = ["필요", "충동", "스트레스", "보상", "습관"];
 
-export default function SpendingPanel({ itemForms, handleAddItem, handleItemChange, handleAmountChange, currentReason, setCurrentReason, currentStars, setCurrentStars, handleSave }) {
+export default function SpendingPanel({ itemForms, handleAddItem, handleItemChange, handleAmountChange, currentReason, setCurrentReason, currentStars, setCurrentStars, handleSave, handleDeleteItem, handleDeleteDiary, diaryExists }) {
   const [reasonScrollRatio, setReasonScrollRatio] = useState(0);
   const reasonRef = useRef(null);
 
@@ -53,12 +53,17 @@ export default function SpendingPanel({ itemForms, handleAddItem, handleItemChan
           {itemForms.map((form, index) => (
             <ItemFormGroup key={index}>
               {index > 0 && <ItemFormDivider />}
-              <ItemInput
-                type="text"
-                placeholder="소비명을 입력하세요"
-                value={form.name}
-                onChange={(e) => handleItemChange(index, "name", e.target.value)}
-              />
+              <ItemNameRow>
+                <ItemInput
+                  type="text"
+                  placeholder="소비명을 입력하세요"
+                  value={form.name}
+                  onChange={(e) => handleItemChange(index, "name", e.target.value)}
+                />
+                <DeleteItemBtn onClick={() => handleDeleteItem(index)}>
+                  <AiOutlineClose size={16} />
+                </DeleteItemBtn>
+              </ItemNameRow>
               <AmountLine>
                 <FieldLabel>금액 입력</FieldLabel>
                 <AmountInputBox
@@ -106,6 +111,9 @@ export default function SpendingPanel({ itemForms, handleAddItem, handleItemChan
       </ReasonRowBox>
 
       <SaveButton onClick={handleSave}>저장</SaveButton>
+      {diaryExists && (
+        <DeleteDiaryButton onClick={handleDeleteDiary}>일기 삭제</DeleteDiaryButton>
+      )}
     </Panel>
   );
 }
@@ -145,6 +153,25 @@ const ItemFormDivider = styled.div`
   height: 1px;
   background: #e8e2da;
   margin-bottom: 4px;
+`;
+
+const ItemNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+`;
+
+const DeleteItemBtn = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #aaa;
+  flex-shrink: 0;
+  &:hover { color: #e84b6a; }
 `;
 
 const ItemInput = styled.input`
@@ -358,6 +385,24 @@ const StarBtn = styled.button`
   padding: 0;
   display: flex;
   align-items: center;
+`;
+
+const DeleteDiaryButton = styled.button`
+  width: 100%;
+  height: 34px;
+  background: #ffcdd2;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: normal;
+  &:hover { background: #ffb3ba; }
 `;
 
 const SaveButton = styled.button`

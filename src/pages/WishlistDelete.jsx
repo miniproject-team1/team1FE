@@ -190,25 +190,19 @@ const ErrorMsg = styled.div`
   text-align: center;
 `;
 
-const DEFAULT_ITEM = {
-  id: null,
-  itemName: "에어팟",
-  price: 89000,
-  url: "https://www.apple.com/kr/",
-};
-
 export default function WishlistDelete() {
   const navigate = useNavigate();
   const location = useLocation();
-  const item = location.state?.item || DEFAULT_ITEM;
+  const item = location.state?.item;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  if (!item) {
+    navigate('/wishlist');
+    return null;
+  }
+
   const handleDelete = async () => {
-    if (!item.id) {
-      navigate('/wishlist');
-      return;
-    }
     setLoading(true);
     setError("");
     try {

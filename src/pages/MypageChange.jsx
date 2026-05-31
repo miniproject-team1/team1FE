@@ -1,6 +1,9 @@
 import styled from "styled-components";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -151,14 +154,41 @@ export default function MypageChange() {
   const [nickname, setNickname] = useState("");
   const [toast, setToast] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!nickname.trim()) return;
-    setToast(true);
-    setTimeout(() => setToast(false), 2000);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.put(
+        `${BASE_URL}/api/v1/users/me/nickname`,
+        { nickname },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("닉네임 변경 성공", response.data);
+      localStorage.setItem("nickname", response.data.data.nickname);
+      setNickname("");
+      setToast(true);
+      setTimeout(() => setToast(false), 2000);
+    } catch (error) {
+      console.error("닉네임 변경 실패", error.response?.data || error.message);
+      alert("닉네임 변경에 실패했습니다");
+    }
   };
 
-  const handleLogout = () => {
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.post(
+        `${BASE_URL}/api/v1/auth/logout`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("로그아웃 성공");
+    } catch (error) {
+      console.error("로그아웃 실패", error.response?.data || error.message);
+    } finally {
+      localStorage.clear();
+      navigate('/login');
+    }
   };
 
   return (
@@ -168,7 +198,7 @@ export default function MypageChange() {
 
         <FieldRow>
           <FieldLabel>현재 닉네임</FieldLabel>
-          <FieldInput value="홍길동" readOnly />
+          <FieldInput value={localStorage.getItem("nickname") || ""} readOnly />
         </FieldRow>
 
         <FieldRow>
