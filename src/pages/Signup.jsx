@@ -5,25 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://team1.z0.co.kr";
 
-const Navbar = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-`;
-
-const Logo = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-`;
-
-const Menu = styled.div`
-  display: flex;
-  gap: 50px;
-  font-size: 22px;
-  font-weight: 400;
-`;
-
 const LoginWrapper = styled.div`
   min-height: 100vh;
   display: flex;
@@ -35,7 +16,6 @@ const LoginPage = styled.div`
   width: 1440px;
   min-height: 100vh;
   height: auto;
-  border-radius: 0px;
   background-color: #eef1da;
   display: flex;
   flex-direction: column;
@@ -112,38 +92,6 @@ const Input = styled.input`
   }
 `;
 
-const IdArea = styled.div`
-  display: flex;
-  gap: 11px;
-`;
-
-const IdInput = styled(Input)`
-  width: 500px;
-`;
-
-const CheckButton = styled.button`
-  width: 143px;
-  height: 60px;
-  border: none;
-  border-radius: 15px;
-  background-color: #d5e5d5;
-  color: #000000;
-  font-family: "S-Core Dream", sans-serif;
-  font-size: 20px;
-  font-weight: 200;
-  cursor: pointer;
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-
-const IdMessage = styled.p`
-  font-size: 18px;
-  margin-top: 0px;
-  align-items: center;
-  color: ${(props) => (props.success ? "green" : "red")};
-`;
-
 const CreateButton = styled.button`
   margin-top: 53px;
   border: none;
@@ -161,6 +109,20 @@ const CreateButton = styled.button`
   }
 `;
 
+const ErrorModal = styled.div`
+  margin-top: 16px;
+  width: 800px;
+  padding: 18px 24px;
+  background: #fff0f0;
+  border: 1px solid #f5c6c6;
+  border-radius: 15px;
+  color: #d00;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 20px;
+  font-weight: 200;
+  text-align: center;
+`;
+
 export default function Signup() {
   const navigate = useNavigate();
   const [NICKNAME, setNICKNAME] = useState("");
@@ -168,30 +130,15 @@ export default function Signup() {
   const [PASSWORD, setPASSWORD] = useState("");
   const [REPASSWORD, setREPASSWORD] = useState("");
   const [EMAIL, setEMAIL] = useState("");
-  const [idMessage, setIdMessage] = useState("");
-  const [isAvailable, setIsAvailable] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleCheckId = async () => {
-    if (!ID.trim()) {
-      setIdMessage("아이디를 입력해주세요");
-      setIsAvailable(false);
-      return;
-    }
-    // 아이디 중복확인 API가 별도로 없으므로 클라이언트에서 형식만 체크
-    setIdMessage("사용 가능한 아이디입니다");
-    setIsAvailable(true);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    if (!isAvailable) {
-      alert("아이디 중복 확인을 해주세요");
-      return;
-    }
     if (PASSWORD !== REPASSWORD) {
-      alert("비밀번호가 일치하지 않습니다");
+      setErrorMessage("비밀번호가 일치하지 않습니다");
       return;
     }
 
@@ -210,97 +157,86 @@ export default function Signup() {
         navigate("/login");
       }
     } catch (error) {
-      const message = error.response?.data?.message || "회원가입에 실패했습니다";
-      alert(message);
+      const message = error.response?.data?.message || "";
+      const lower = message.toLowerCase();
+      if (lower.includes("아이디") || lower.includes("loginid")) {
+        setErrorMessage("중복된 아이디입니다");
+      } else if (lower.includes("이메일") || lower.includes("email")) {
+        setErrorMessage("중복된 이메일입니다");
+      } else {
+        setErrorMessage(message || "회원가입에 실패했습니다");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <LoginWrapper>
-        <LoginPage>
-          <LoginCard>
-            <LoginTitle>SIGN UP</LoginTitle>
-            <form onSubmit={handleSubmit}>
-              <LoginForm>
-                <FormRow>
-                  <Label>닉네임</Label>
-                  <Input
-                    type="text"
-                    placeholder="닉네임을 입력해주세요"
-                    value={NICKNAME}
-                    onChange={(e) => setNICKNAME(e.target.value)}
-                  />
-                </FormRow>
+    <LoginWrapper>
+      <LoginPage>
+        <LoginCard>
+          <LoginTitle>SIGN UP</LoginTitle>
+          <form onSubmit={handleSubmit}>
+            <LoginForm>
+              <FormRow>
+                <Label>닉네임</Label>
+                <Input
+                  type="text"
+                  placeholder="닉네임을 입력해주세요"
+                  value={NICKNAME}
+                  onChange={(e) => setNICKNAME(e.target.value)}
+                />
+              </FormRow>
 
-                <FormRow>
-                  <Label>아이디</Label>
-                  <IdArea>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: "11px" }}>
-                        <IdInput
-                          type="text"
-                          placeholder="아이디를 입력해주세요"
-                          value={ID}
-                          onChange={(e) => setID(e.target.value)}
-                        />
-                        <CheckButton type="button" onClick={handleCheckId}>
-                          중복 확인
-                        </CheckButton>
-                      </div>
-                      {idMessage && (
-                        <IdMessage success={isAvailable}>{idMessage}</IdMessage>
-                      )}
-                    </div>
-                  </IdArea>
-                </FormRow>
+              <FormRow>
+                <Label>아이디</Label>
+                <Input
+                  type="text"
+                  placeholder="아이디를 입력해주세요"
+                  value={ID}
+                  onChange={(e) => { setID(e.target.value); setErrorMessage(""); }}
+                />
+              </FormRow>
 
-                <FormRow>
-                  <Label>비밀번호</Label>
-                  <Input
-                    type="password"
-                    placeholder="비밀번호를 입력해주세요"
-                    value={PASSWORD}
-                    onChange={(e) => setPASSWORD(e.target.value)}
-                  />
-                </FormRow>
+              <FormRow>
+                <Label>비밀번호</Label>
+                <Input
+                  type="password"
+                  placeholder="비밀번호를 입력해주세요"
+                  value={PASSWORD}
+                  onChange={(e) => setPASSWORD(e.target.value)}
+                />
+              </FormRow>
 
-                <FormRow>
-                  <Label>비밀번호 확인</Label>
-                  <Input
-                    type="password"
-                    placeholder="비밀번호를 한 번 더 입력해주세요"
-                    value={REPASSWORD}
-                    onChange={(e) => setREPASSWORD(e.target.value)}
-                  />
-                </FormRow>
+              <FormRow>
+                <Label>비밀번호 확인</Label>
+                <Input
+                  type="password"
+                  placeholder="비밀번호를 한 번 더 입력해주세요"
+                  value={REPASSWORD}
+                  onChange={(e) => setREPASSWORD(e.target.value)}
+                />
+              </FormRow>
 
-                <FormRow>
-                  <Label>이메일</Label>
-                  <Input
-                    type="text"
-                    placeholder="이메일을 입력해주세요"
-                    value={EMAIL}
-                    onChange={(e) => setEMAIL(e.target.value)}
-                  />
-                </FormRow>
+              <FormRow>
+                <Label>이메일</Label>
+                <Input
+                  type="text"
+                  placeholder="이메일을 입력해주세요"
+                  value={EMAIL}
+                  onChange={(e) => { setEMAIL(e.target.value); setErrorMessage(""); }}
+                />
+              </FormRow>
 
-                <CreateButton type="submit" disabled={isLoading}>
-                  {isLoading ? "처리 중..." : "회원가입"}
-                </CreateButton>
-              </LoginForm>
-            </form>
-          </LoginCard>
-        </LoginPage>
-      </LoginWrapper>
-    </>
+              <CreateButton type="submit" disabled={isLoading}>
+                {isLoading ? "처리 중..." : "회원가입"}
+              </CreateButton>
+
+              {errorMessage && <ErrorModal>{errorMessage}</ErrorModal>}
+            </LoginForm>
+          </form>
+        </LoginCard>
+      </LoginPage>
+    </LoginWrapper>
   );
 }
