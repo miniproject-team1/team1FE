@@ -13,7 +13,7 @@ const PageWrapper = styled.div`
   background: #EEF1DA;
   font-family: "S-Core Dream", sans-serif;
   box-sizing: border-box;
-  padding: clamp(20px, 4vw, 50px);
+  padding: clamp(20px, 4vw, 48px);
 `;
 
 const DateText = styled.div`
@@ -23,14 +23,15 @@ const DateText = styled.div`
   color: #888;
   letter-spacing: 1px;
   margin-bottom: 2px;
+  text-align: left;
 `;
 
 const PageTitle = styled.h1`
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(20px, 3vw, 36px);
-  font-weight: 600;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 500;
   color: #000;
-  margin: 0 0 clamp(20px, 3vw, 40px) 0;
+  margin: 0 0 clamp(16px, 2vw, 28px) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,37 +47,37 @@ const PageTitle = styled.h1`
 
 const AddBtn = styled.button`
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(14px, 1.2vw, 20px);
+  font-size: 14px;
   font-weight: 500;
   color: #000;
-  background: #D5E5D5;
+  background: #C7D9C7;
   border: none;
   border-radius: 20px;
-  padding: clamp(8px, 1vw, 14px) clamp(16px, 1.5vw, 24px);
+  padding: 8px 18px;
   cursor: pointer;
   white-space: nowrap;
   transition: opacity 0.15s;
-  &:hover { opacity: 0.85; }
+  &:hover { opacity: 0.8; }
 `;
 
 const SummaryCard = styled.div`
   width: 100%;
   background: #fff;
-  border-radius: 30px;
-  padding: clamp(16px, 2vw, 24px);
+  border-radius: 20px;
+  padding: clamp(16px, 2vw, 28px) clamp(20px, 2.5vw, 32px);
   box-sizing: border-box;
-  margin-bottom: clamp(15px, 2vw, 25px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 `;
 
 const SummaryLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: clamp(14px, 1.2vw, 18px);
-  font-weight: 500;
-  color: #000;
-  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 6px;
 
   &::before {
     content: '';
@@ -89,60 +90,58 @@ const SummaryLabel = styled.div`
 `;
 
 const SummaryAmount = styled.div`
-  font-size: clamp(24px, 3vw, 40px);
-  font-weight: 600;
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 700;
   color: #000;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 `;
 
 const SummaryCount = styled.div`
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: 12px;
   color: #888;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 `;
 
 const BarLabel = styled.div`
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: 11px;
   color: #888;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 `;
 
 const BarBg = styled.div`
   width: 100%;
-  height: clamp(40px, 5vw, 60px);
-  border-radius: 12px;
-  border: 3px solid #D5E5D5;
+  height: 8px;
+  border-radius: 4px;
   background: #EEF1DA;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 `;
 
 const BarFill = styled.div`
   height: 100%;
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(213, 229, 213, 0.50) 0%, #C7D9DD 100%);
+  border-radius: 4px;
+  background: linear-gradient(90deg, #A8C8A8 0%, #7BAB7B 100%);
   width: ${({ pct }) => pct}%;
 `;
 
 const BarPct = styled.div`
-  font-size: clamp(14px, 1.5vw, 20px);
-  font-weight: 600;
-  color: #000;
+  font-size: 12px;
+  color: #888;
   text-align: right;
 `;
 
 const CardRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(15px, 2vw, 25px);
-  margin-bottom: clamp(15px, 2vw, 25px);
+  gap: 16px;
+  margin-bottom: 16px;
 `;
 
 const MiniCard = styled.div`
   background: #fff;
-  border-radius: 30px;
-  padding: clamp(16px, 2vw, 24px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 20px;
+  padding: clamp(14px, 2vw, 22px) clamp(16px, 2vw, 24px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
   box-sizing: border-box;
 `;
 
@@ -150,10 +149,10 @@ const MiniLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: clamp(14px, 1.2vw, 18px);
-  font-weight: 500;
-  color: #000;
-  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 8px;
 
   &::before {
     content: '';
@@ -166,9 +165,10 @@ const MiniLabel = styled.div`
 `;
 
 const MiniAmount = styled.div`
-  font-size: clamp(20px, 2.5vw, 32px);
-  font-weight: 600;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 700;
   color: #000;
+  margin-bottom: 4px;
 `;
 
 const MiniSub = styled.div`
@@ -179,45 +179,45 @@ const MiniSub = styled.div`
 const TableCard = styled.div`
   width: 100%;
   background: #fff;
-  border-radius: 30px;
+  border-radius: 20px;
   padding: clamp(16px, 2vw, 24px);
   box-sizing: border-box;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 `;
 
 const TableHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: clamp(12px, 1.5vw, 20px);
+  margin-bottom: 16px;
 `;
 
 const TableTitle = styled.div`
-  font-size: clamp(16px, 1.8vw, 24px);
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: #000;
 `;
 
 const CountBadge = styled.div`
-  background: #D5E5D5;
+  background: #C7D9C7;
   color: #3a6a3a;
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: 12px;
   font-weight: 600;
   border-radius: 20px;
-  padding: 3px 12px;
+  padding: 2px 10px;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(13px, 1.2vw, 16px);
+  font-size: clamp(12px, 1.2vw, 14px);
 `;
 
 const Th = styled.th`
   text-align: left;
   font-weight: 500;
   color: #888;
-  padding: 10px 14px;
+  padding: 8px 10px;
   border-bottom: 1px solid #F0F0F0;
   white-space: nowrap;
 `;
@@ -230,7 +230,7 @@ const Tr = styled.tr`
 `;
 
 const Td = styled.td`
-  padding: 14px;
+  padding: 12px 10px;
   color: #222;
   vertical-align: middle;
   text-decoration: ${({ done }) => done ? 'line-through' : 'none'};
@@ -245,9 +245,9 @@ const ItemName = styled.div`
 
 const StatusBadge = styled.span`
   display: inline-block;
-  padding: 4px 14px;
+  padding: 3px 12px;
   border-radius: 20px;
-  font-size: clamp(12px, 1vw, 14px);
+  font-size: 12px;
   font-weight: 500;
   background: #D5E5D5;
   color: #3a6a3a;
@@ -255,9 +255,9 @@ const StatusBadge = styled.span`
 
 const ActionBtn = styled.button`
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(12px, 1vw, 14px);
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 4px 12px;
   border-radius: 20px;
   border: none;
   cursor: pointer;
@@ -265,7 +265,7 @@ const ActionBtn = styled.button`
   &:hover { opacity: 0.8; }
 
   background: ${({ variant }) =>
-    variant === 'buy' ? '#D5E5D5' :
+    variant === 'buy' ? '#C7D9C7' :
     variant === 'delete' ? '#E8C8C8' : '#ddd'};
   color: ${({ variant }) =>
     variant === 'buy' ? '#2a5a2a' :
@@ -276,7 +276,7 @@ const ActionBtn = styled.button`
 const LoadingText = styled.div`
   text-align: center;
   color: #888;
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: 14px;
   padding: 40px 0;
 `;
 

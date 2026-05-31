@@ -42,12 +42,12 @@ const CardHeader = styled.div`
 `;
 
 const Title = styled.h1`
-  color: #E84B6A;
+  color: #000;
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(20px, 3vw, 36px);
-  font-weight: 600;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 500;
   margin: 0;
-  span { color: #000; }
+  span { color: #E84B6A; }
 `;
 
 const SettingBtn = styled.button`
@@ -397,9 +397,9 @@ export default function Mypage() {
               <CardLabel>충동 소비 비율</CardLabel>
               <BarRow>
                 <BarWrap>
-                  <BarFill pct={summary ? Math.round(summary.impulseRatio * 100) : 0} />
+                  <BarFill pct={summary ? Math.min(Math.round(summary.impulseRatio), 100) : 0} />
                 </BarWrap>
-                <PctLabel>{summary ? `${Math.round(summary.impulseRatio * 100)}%` : "-"}</PctLabel>
+                <PctLabel>{summary ? `${Math.min(Math.round(summary.impulseRatio), 100)}%` : "-"}</PctLabel>
               </BarRow>
             </BigCard>
 
@@ -407,9 +407,9 @@ export default function Mypage() {
               <CardLabel>예산 달성률</CardLabel>
               <BarRow>
                 <BarWrap>
-                  <BarFill pct={summary ? Math.round(summary.budgetUsedRatio * 100) : 0} />
+                  <BarFill pct={summary ? Math.min(Math.round(summary.budgetUsedRatio), 100) : 0} />
                 </BarWrap>
-                <PctLabel>{summary ? `${Math.round(summary.budgetUsedRatio * 100)}%` : "-"}</PctLabel>
+                <PctLabel>{summary ? `${Math.min(Math.round(summary.budgetUsedRatio), 100)}%` : "-"}</PctLabel>
               </BarRow>
             </BigCard>
 
