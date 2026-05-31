@@ -59,8 +59,9 @@ const LoginCard = styled.div`
 const LoginTitle = styled.h1`
   text-align: center;
   margin-bottom: 5px;
-  font-size: 35px;
-  font-weight: 400;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 40px;
+  font-weight: 500;
 `;
 
 const LoginForm = styled.div`
@@ -83,22 +84,32 @@ const FormRow = styled.div`
 const Label = styled.label`
   width: 180px;
   flex-shrink: 0;
-  font-size: 24px;
-  font-weight: 500;
+  font-family: "S-Core Dream", sans-serif;
+  font-size: 25px;
+  font-weight: 200;
   text-align: left;
 `;
 
 const Input = styled.input`
   height: 60px;
   width: 650px;
-  border-color: #d5e5d5;
-  border-width: 2px;
+  border: 2px solid #d5e5d5;
   border-radius: 15px;
   background-color: #ffffff;
-  color: #a2a2a2;
-  opacity: 0.5;
+  color: #000;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 22px;
+  font-weight: 200;
+  padding: 15px 21px;
   box-sizing: border-box;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(162, 162, 162, 0.5);
+    font-family: "S-Core Dream", sans-serif;
+    font-size: 22px;
+    font-weight: 200;
+  }
 `;
 
 const IdArea = styled.div`
@@ -112,12 +123,14 @@ const IdInput = styled(Input)`
 
 const CheckButton = styled.button`
   width: 143px;
-  height: 54px;
+  height: 60px;
   border: none;
   border-radius: 15px;
   background-color: #d5e5d5;
   color: #000000;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 20px;
+  font-weight: 200;
   cursor: pointer;
   &:active {
     transform: translateY(1px);
@@ -137,10 +150,11 @@ const CreateButton = styled.button`
   background: #d5e5d5;
   color: #000000;
   border-radius: 15px;
-  height: 70px;
+  height: 60px;
   width: 800px;
+  font-family: "S-Core Dream", sans-serif;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 200;
   cursor: pointer;
   &:active {
     transform: translateY(1px);
@@ -205,15 +219,6 @@ export default function Signup() {
 
   return (
     <>
-      <Navbar>
-        <Logo>로고</Logo>
-        <Menu>
-          <span>Home</span>
-          <span>Wishlist</span>
-          <span>My page</span>
-        </Menu>
-      </Navbar>
-
       <LoginWrapper>
         <LoginPage>
           <LoginCard>
