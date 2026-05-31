@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
 import SummaryBar from "../components/Diary/SummaryBar";
@@ -11,6 +11,7 @@ const EMOJI_KEYS = ["HAPPY", "SMILE", "NEUTRAL", "SAD", "ANGRY"];
 
 export default function Diary() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedEmotion, setSelectedEmotion] = useState(null);
   const [emotionReason, setEmotionReason] = useState("");
   const [emotionMemo, setEmotionMemo] = useState("");
@@ -60,6 +61,7 @@ export default function Diary() {
             name: e.category,
             amount: e.amount.toLocaleString(),
             category: e.category,
+            expenseId: e.expenseId,
           })));
           setCurrentReason(data.expenses[0].reason || "");
           const satisfaction = data.expenses[0].satisfaction || 0;
@@ -77,6 +79,39 @@ export default function Diary() {
     }
     fetchDiary();
   }, [diaryDate]);
+
+  const handleDeleteDiary = async () => {
+    if (!window.confirm("일기를 삭제하시겠습니까?")) return;
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.delete(`${BASE_URL}/api/v1/diary/${diaryDate}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("일기 삭제 성공");
+      navigate("/main");
+    } catch (error) {
+      console.error("일기 삭제 실패", error.response?.data || error.message);
+      alert("일기 삭제에 실패했습니다");
+    }
+  };
+
+  const handleDeleteItem = async (index) => {
+    const item = itemForms[index];
+    if (item.expenseId) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        await axios.delete(`${BASE_URL}/api/v1/diary/${diaryDate}/expenses/${item.expenseId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("소비 항목 삭제 성공");
+      } catch (error) {
+        console.error("소비 항목 삭제 실패", error.response?.data || error.message);
+        alert("항목 삭제에 실패했습니다");
+        return;
+      }
+    }
+    setItemForms((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSetCurrentStars = (val) => {
     setCurrentStars(val);
@@ -147,6 +182,8 @@ export default function Diary() {
         totalAmount={totalAmount}
         overallStars={overallStars}
         setOverallStars={setOverallStars}
+        onDeleteDiary={handleDeleteDiary}
+        diaryExists={diaryExists}
       />
 
       <ContentRow>
@@ -168,6 +205,9 @@ export default function Diary() {
           currentStars={currentStars}
           setCurrentStars={handleSetCurrentStars}
           handleSave={handleSave}
+          handleDeleteItem={handleDeleteItem}
+          handleDeleteDiary={handleDeleteDiary}
+          diaryExists={diaryExists}
         />
       </ContentRow>
 

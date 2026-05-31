@@ -94,7 +94,7 @@ export default function Main() {
     <PageWrapper>
       <TopSection>
         <LeftSection>
-          <Greeting>Hello, 홍길동님</Greeting>
+          <Greeting>Hello, {localStorage.getItem("nickname")}님</Greeting>
           <BudgetBar>
             <BudgetRow>
               <BudgetLabel>이번 달 예산 |</BudgetLabel>

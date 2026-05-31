@@ -168,7 +168,7 @@ export default function MypageChange() {
 
         <FieldRow>
           <FieldLabel>현재 닉네임</FieldLabel>
-          <FieldInput value="홍길동" readOnly />
+          <FieldInput value={localStorage.getItem("nickname") || ""} readOnly />
         </FieldRow>
 
         <FieldRow>

@@ -15,7 +15,6 @@ export default function SummaryBar({ dateStr, dayStr, totalAmount, overallStars,
           <SpendingSection>
             <SpendingLabel>오늘의 총 소비 금액</SpendingLabel>
             <SpendingAmount>₩{totalAmount.toLocaleString()}</SpendingAmount>
-            <SpendingAvg>최근 7일 평균 ₩13,600</SpendingAvg>
           </SpendingSection>
           <Divider />
           <SatisfactionSection>
@@ -43,6 +42,7 @@ const Bar = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 `;
 
 const InnerBox = styled.div`
