@@ -1,7 +1,10 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { getWishlist, purchaseWishlist } from "../api/wishlist";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 /* ── Styled Components ── */
 const PageWrapper = styled.div`
@@ -10,7 +13,7 @@ const PageWrapper = styled.div`
   background: #EEF1DA;
   font-family: "S-Core Dream", sans-serif;
   box-sizing: border-box;
-  padding: clamp(20px, 4vw, 48px);
+  padding: clamp(20px, 4vw, 50px);
 `;
 
 const DateText = styled.div`
@@ -20,16 +23,14 @@ const DateText = styled.div`
   color: #888;
   letter-spacing: 1px;
   margin-bottom: 2px;
-  text-align: left;
 `;
 
 const PageTitle = styled.h1`
   font-family: "S-Core Dream", sans-serif;
-  font-size: clamp(24px, 3vw, 36px);
-  font-style: normal;
-  font-weight: 200;
+  font-size: clamp(20px, 3vw, 36px);
+  font-weight: 600;
   color: #000;
-  margin: 0 0 clamp(16px, 2vw, 28px) 0;
+  margin: 0 0 clamp(20px, 3vw, 40px) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,44 +38,45 @@ const PageTitle = styled.h1`
   .title {
     display: flex;
     align-items: center;
+    gap: 8px;
   }
 
-  span { color: #14752C; }
+  span { color: #E84B6A; }
 `;
 
 const AddBtn = styled.button`
   font-family: "S-Core Dream", sans-serif;
-  font-size: 14px;
+  font-size: clamp(14px, 1.2vw, 20px);
   font-weight: 500;
   color: #000;
-  background: #C7D9C7;
+  background: #D5E5D5;
   border: none;
   border-radius: 20px;
-  padding: 8px 18px;
+  padding: clamp(8px, 1vw, 14px) clamp(16px, 1.5vw, 24px);
   cursor: pointer;
   white-space: nowrap;
   transition: opacity 0.15s;
-  &:hover { opacity: 0.8; }
+  &:hover { opacity: 0.85; }
 `;
 
 const SummaryCard = styled.div`
   width: 100%;
   background: #fff;
-  border-radius: 20px;
-  padding: clamp(16px, 2vw, 28px) clamp(20px, 2.5vw, 32px);
+  border-radius: 30px;
+  padding: clamp(16px, 2vw, 24px);
   box-sizing: border-box;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  margin-bottom: clamp(15px, 2vw, 25px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 `;
 
 const SummaryLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 400;
-  color: #555;
-  margin-bottom: 6px;
+  font-size: clamp(14px, 1.2vw, 18px);
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 10px;
 
   &::before {
     content: '';
@@ -87,58 +89,60 @@ const SummaryLabel = styled.div`
 `;
 
 const SummaryAmount = styled.div`
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 700;
+  font-size: clamp(24px, 3vw, 40px);
+  font-weight: 600;
   color: #000;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 `;
 
 const SummaryCount = styled.div`
-  font-size: 12px;
+  font-size: clamp(12px, 1vw, 15px);
   color: #888;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 `;
 
 const BarLabel = styled.div`
-  font-size: 11px;
+  font-size: clamp(12px, 1vw, 15px);
   color: #888;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 `;
 
 const BarBg = styled.div`
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
+  height: clamp(40px, 5vw, 60px);
+  border-radius: 12px;
+  border: 3px solid #D5E5D5;
   background: #EEF1DA;
   overflow: hidden;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 `;
 
 const BarFill = styled.div`
   height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #A8C8A8 0%, #7BAB7B 100%);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(213, 229, 213, 0.50) 0%, #C7D9DD 100%);
   width: ${({ pct }) => pct}%;
 `;
 
 const BarPct = styled.div`
-  font-size: 12px;
-  color: #888;
+  font-size: clamp(14px, 1.5vw, 20px);
+  font-weight: 600;
+  color: #000;
   text-align: right;
 `;
 
 const CardRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: clamp(15px, 2vw, 25px);
+  margin-bottom: clamp(15px, 2vw, 25px);
 `;
 
 const MiniCard = styled.div`
   background: #fff;
-  border-radius: 20px;
-  padding: clamp(14px, 2vw, 22px) clamp(16px, 2vw, 24px);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  border-radius: 30px;
+  padding: clamp(16px, 2vw, 24px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   box-sizing: border-box;
 `;
 
@@ -146,10 +150,10 @@ const MiniLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 400;
-  color: #555;
-  margin-bottom: 8px;
+  font-size: clamp(14px, 1.2vw, 18px);
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 12px;
 
   &::before {
     content: '';
@@ -162,10 +166,9 @@ const MiniLabel = styled.div`
 `;
 
 const MiniAmount = styled.div`
-  font-size: clamp(18px, 2.5vw, 28px);
-  font-weight: 700;
+  font-size: clamp(20px, 2.5vw, 32px);
+  font-weight: 600;
   color: #000;
-  margin-bottom: 4px;
 `;
 
 const MiniSub = styled.div`
@@ -176,45 +179,45 @@ const MiniSub = styled.div`
 const TableCard = styled.div`
   width: 100%;
   background: #fff;
-  border-radius: 20px;
+  border-radius: 30px;
   padding: clamp(16px, 2vw, 24px);
   box-sizing: border-box;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 `;
 
 const TableHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: clamp(12px, 1.5vw, 20px);
 `;
 
 const TableTitle = styled.div`
-  font-size: 15px;
-  font-weight: 600;
+  font-size: clamp(16px, 1.8vw, 24px);
+  font-weight: 500;
   color: #000;
 `;
 
 const CountBadge = styled.div`
-  background: #C7D9C7;
+  background: #D5E5D5;
   color: #3a6a3a;
-  font-size: 12px;
+  font-size: clamp(12px, 1vw, 15px);
   font-weight: 600;
   border-radius: 20px;
-  padding: 2px 10px;
+  padding: 3px 12px;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(12px, 1.2vw, 14px);
+  font-size: clamp(13px, 1.2vw, 16px);
 `;
 
 const Th = styled.th`
   text-align: left;
   font-weight: 500;
   color: #888;
-  padding: 8px 10px;
+  padding: 10px 14px;
   border-bottom: 1px solid #F0F0F0;
   white-space: nowrap;
 `;
@@ -227,7 +230,7 @@ const Tr = styled.tr`
 `;
 
 const Td = styled.td`
-  padding: 12px 10px;
+  padding: 14px;
   color: #222;
   vertical-align: middle;
   text-decoration: ${({ done }) => done ? 'line-through' : 'none'};
@@ -242,19 +245,19 @@ const ItemName = styled.div`
 
 const StatusBadge = styled.span`
   display: inline-block;
-  padding: 3px 12px;
+  padding: 4px 14px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: clamp(12px, 1vw, 14px);
   font-weight: 500;
-  background: ${({ status }) => status === '완료' ? '#D5E5D5' : '#FFD6D6'};
-  color: ${({ status }) => status === '완료' ? '#3a6a3a' : '#c0392b'};
+  background: #D5E5D5;
+  color: #3a6a3a;
 `;
 
 const ActionBtn = styled.button`
   font-family: "S-Core Dream", sans-serif;
-  font-size: 12px;
+  font-size: clamp(12px, 1vw, 14px);
   font-weight: 500;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   border: none;
   cursor: pointer;
@@ -262,7 +265,7 @@ const ActionBtn = styled.button`
   &:hover { opacity: 0.8; }
 
   background: ${({ variant }) =>
-    variant === 'buy' ? '#C7D9C7' :
+    variant === 'buy' ? '#D5E5D5' :
     variant === 'delete' ? '#E8C8C8' : '#ddd'};
   color: ${({ variant }) =>
     variant === 'buy' ? '#2a5a2a' :
@@ -273,7 +276,7 @@ const ActionBtn = styled.button`
 const LoadingText = styled.div`
   text-align: center;
   color: #888;
-  font-size: 14px;
+  font-size: clamp(14px, 1.2vw, 16px);
   padding: 40px 0;
 `;
 
@@ -288,12 +291,18 @@ export default function Wishlist() {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const res = await getWishlist();
-      if (res.success) {
-        const data = res.data;
-        setItems(data.wishItems || []);
-        setRemaining(data.remainingBudget || 0);
+      const token = localStorage.getItem("accessToken");
+      const now = new Date();
+      const [wishRes, calendarRes] = await Promise.all([
+        getWishlist(),
+        axios.get(`${BASE_URL}/api/v1/calendar/${now.getFullYear()}/${now.getMonth() + 1}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      if (wishRes.success) {
+        setItems(wishRes.data.wishItems || []);
       }
+      setRemaining(calendarRes.data.data?.remainingBudget || 0);
     } catch (err) {
       console.error("위시리스트 불러오기 실패:", err);
     } finally {
@@ -333,9 +342,8 @@ export default function Wishlist() {
 
   return (
     <PageWrapper>
-      <DateText>{monthStr} {yearStr}</DateText>
       <PageTitle>
-        <div className="title">나의<span> 위시리스트</span></div>
+        <div className="title">나의<span>위시리스트</span></div>
         <AddBtn onClick={() => navigate('/wishlist-plus')}>+ 새 항목 추가</AddBtn>
       </PageTitle>
 
@@ -356,7 +364,6 @@ export default function Wishlist() {
         <MiniCard>
           <MiniLabel color="#7BAB7B">이번 달 잔여 예산</MiniLabel>
           <MiniAmount>₩{remaining.toLocaleString()}</MiniAmount>
-          <MiniSub>₩{surplus.toLocaleString()} 여유 있음</MiniSub>
         </MiniCard>
         <MiniCard>
           <MiniLabel color="#F5C842">구매 완료</MiniLabel>
@@ -390,7 +397,6 @@ export default function Wishlist() {
             <tbody>
               {allItems.map((item, idx) => {
                 const done = item.purchased;
-                const status = done ? '완료' : '대기중';
                 return (
                   <Tr key={item.id} done={done}>
                     <Td done={done}>
@@ -405,7 +411,7 @@ export default function Wishlist() {
                     </Td>
                     <Td done={done}>₩{(item.price || 0).toLocaleString()}</Td>
                     <Td>
-                      <StatusBadge status={status}>{status}</StatusBadge>
+                      {done && <StatusBadge status="완료">완료</StatusBadge>}
                     </Td>
                     <Td>
                       {!done && (

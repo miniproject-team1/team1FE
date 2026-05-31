@@ -1,7 +1,10 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { addWishlist, getWishlist } from "../api/wishlist";
+import axios from "axios";
+import { addWishlist } from "../api/wishlist";
+
+const BASE_URL = "https://team1.z0.co.kr";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -274,10 +277,13 @@ export default function WishlistPlus() {
   useEffect(() => {
     const fetchRemaining = async () => {
       try {
-        const res = await getWishlist();
-        if (res.success) {
-          setRemaining(res.data.remainingBudget || 0);
-        }
+        const token = localStorage.getItem("accessToken");
+        const now = new Date();
+        const res = await axios.get(
+          `${BASE_URL}/api/v1/calendar/${now.getFullYear()}/${now.getMonth() + 1}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setRemaining(res.data.data?.remainingBudget || 0);
       } catch (err) {
         console.error("잔여예산 불러오기 실패:", err);
       }
